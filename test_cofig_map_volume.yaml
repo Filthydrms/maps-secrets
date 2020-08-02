@@ -1,0 +1,57 @@
+---
+
+# We are gouing to pass arguments to the docker from the kubernetis file
+# instead of from the CMD field in docker
+# k create configmap nginx-compress --from-file=nginx-conf.conf --from-literal=sleep_interval=45
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-configmap-nginx-forune
+  labels:
+    appName: dshivakumar-foutune-latest
+spec:
+  containers:
+  - name: fortune-teller
+    image: docker.io/dshivakumar/fortune:env
+    args:
+      - "$(INTERVAL)"                                             # Note: numers are to be encapsulated in quotes
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "300m"
+    env:
+      - name: INTERVAL
+        #value: "21"
+        valueFrom:
+          configMapKeyRef:
+            name: nginx-compress
+            key: sleep_interval
+            optional: true                          # this will make sure even if the config map is not present the container will run
+    ports:
+      - containerPort: 80
+    volumeMounts:
+      - name: htdocs
+        mountPath: /var/htdocs/index.html
+  - name: webserver
+    image: nginx:latest    
+    resources:
+        limits:
+          memory: "128Mi"
+          cpu: "50m"
+    volumeMounts:
+      - name: nginx-conf
+        mountPath: /etc/ngnix/conf.d
+        readOnly: true    
+  volumes:
+    - name: htdocs
+      hostPath:
+        path: /home/index.html
+        type: FileOrCreate
+    - name: nginx-conf
+      configMap:
+        name: nginx-compress
+        items:
+          - key: "nginx-conf.conf"
+            path: "nginx-conf.conf"

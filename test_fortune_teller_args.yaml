@@ -1,0 +1,39 @@
+---
+
+# We are gouing to pass arguments to the docker from the kubernetis file
+# instead of from the CMD field in docker
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-fortuneteller
+  labels:
+    appName: dshivakumar-foutune-latest
+spec:
+  containers:
+  - name: fortune-teller
+    image: docker.io/dshivakumar/fortune:env
+    args:
+      - "16"                                             # Note: numers are to be encapsulated in quotes
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    env:
+      - name: INTERVAL
+        #value: "21"
+        valueFrom:
+          configMapKeyRef:
+            name: fortune-interval
+            key: INTERVAL
+            optional: true                          # this will make sure even if the config map is not present the container will run
+    ports:
+      - containerPort: 80
+    volumeMounts:
+      - name: htdocs
+        mountPath: /var/htdocs/index.html
+  volumes:
+    - name: htdocs
+      hostPath:
+        path: /home/index.html
+        type: FileOrCreate

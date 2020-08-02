@@ -1,0 +1,32 @@
+---
+
+# We are gouing to pass arguments to the docker from the kubernetis file
+# instead of from the CMD field in docker
+# k create configmap nginx-compress --from-file=nginx-conf.conf --from-literal=sleep_interval=45
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: compress
+  labels:
+    appName: dshivakumar-foutune-latest
+spec:
+  containers:
+  - name: webserver
+    image: nginx:latest    
+    resources:
+        limits:
+          memory: "128Mi"
+          cpu: "50m"
+    volumeMounts:
+      - name: nginx-conf
+        mountPath: /etc/ngnix/conf.d
+        readOnly: true    
+  volumes:
+    - name: nginx-conf
+      configMap:
+        name: nginx-compress
+        items:
+          - key: "nginx-conf.conf"
+            path: "nginx-conf.conf"
